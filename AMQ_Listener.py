@@ -35,7 +35,7 @@ class ActiveMqListener(stomp.ConnectionListener):
         self.connection.set_listener('MessagingListener', self)
         self.topic = topic
         self.callback = callback
-        self.connection.connect(self.user, self.password, wait=True)
+        self._reconnect()  # handles initial connect with backoff so startup failures don't crash the process
 
     def on_connecting(self, host_and_port):
         log.debug(f'ActiveMQ connected socket to {str(host_and_port)}')
