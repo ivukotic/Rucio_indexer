@@ -23,19 +23,21 @@ class ActiveMqListener(stomp.ConnectionListener):
         self.user = user
         self.password = password
         self._reconnect_lock = threading.Lock()
-        # heartbeats=(send_ms, recv_ms) — broker must reply within recv_ms or
-        # the stomp library fires on_heartbeat_timeout automatically.
-        # reconnect_attempts_max=0 disables stomp.py's own built-in auto-reconnect
-        # thread; otherwise it races with _reconnect() below and both send a
-        # CONNECT frame on the same socket, which the broker rejects as a
-        # duplicate CONNECT and kills the connection, causing an endless loop.
+        # heartbeats=(send_ms, recv_ms) — broker must reply within recv_ms
+        # or the stomp library fires on_heartbeat_timeout automatically.
+        # reconnect_attempts_max=0 disables stomp.py's own built-in
+        # auto-reconnect thread; otherwise it races with _reconnect() below
+        # and both send a CONNECT frame on the same socket, which the broker
+        # rejects as a duplicate CONNECT and kills the connection.
         self.connection = stomp.Connection(
             [(host, port)], heartbeats=(4000, 4000), reconnect_attempts_max=0
         )
         self.connection.set_listener('MessagingListener', self)
         self.topic = topic
         self.callback = callback
-        self._reconnect()  # handles initial connect with backoff so startup failures don't crash the process
+        # Handles initial connect with backoff so startup failures don't
+        # crash the process.
+        self._reconnect()
 
     def on_connecting(self, host_and_port):
         log.debug(f'ActiveMQ connected socket to {str(host_and_port)}')
@@ -54,18 +56,21 @@ class ActiveMqListener(stomp.ConnectionListener):
         self._reconnect()
 
     def on_heartbeat_timeout(self):
-        # Let on_disconnected handle reconnection by forcing a clean disconnect.
-        log.warning('ActiveMQ heartbeat timeout. Forcing disconnect to trigger reconnect...')
-        try:
-            self.connection.disconnect()
-        except Exception:
-            pass
+        # stomp.py already disconnects the socket when a heartbeat times out,
+        # which fires on_disconnected — that handler owns reconnection.
+        # Calling disconnect() here races with an already-completed reconnect
+        # and sends a duplicate CONNECT frame, which the broker rejects with
+        # "duplicate CONNECT or STOMP frame".
+        log.warning(
+            'ActiveMQ heartbeat timeout '
+            '(reconnect handled by on_disconnected).'
+        )
 
     def _reconnect(self):
-        # on_disconnected(), on_heartbeat_timeout() and the external silence
-        # watchdog can all trigger a reconnect around the same time; without
-        # this guard two of them would call connect() concurrently and send
-        # overlapping CONNECT frames on the same socket.
+        # on_disconnected() and on_heartbeat_timeout() can both fire around
+        # the same time; without this guard they would call connect()
+        # concurrently and send overlapping CONNECT frames on the same
+        # socket, which the broker rejects as a duplicate CONNECT.
         if not self._reconnect_lock.acquire(blocking=False):
             log.debug('Reconnect already in progress, skipping.')
             return
@@ -76,10 +81,15 @@ class ActiveMqListener(stomp.ConnectionListener):
                 attempt += 1
                 try:
                     log.info(f'Reconnect attempt {attempt}...')
-                    self.connection.connect(self.user, self.password, wait=True)
+                    self.connection.connect(
+                        self.user, self.password, wait=True
+                    )
                     return
                 except Exception as e:
-                    log.warning(f'Reconnect attempt {attempt} failed: {e}. Retry in {delay}s...')
+                    log.warning(
+                        f'Reconnect attempt {attempt} failed: {e}. '
+                        f'Retry in {delay}s...'
+                    )
                     time.sleep(delay)
                     delay = min(delay * 2, _RECONNECT_DELAY_MAX)
         finally:
@@ -91,7 +101,9 @@ class ActiveMqListener(stomp.ConnectionListener):
             content = json.loads(message)
             self.callback(content)
         except Exception as e:
-            log.warning('Failed to process message: (%s) %s' % (type(e).__name__, e))
+            log.warning(
+                'Failed to process message: (%s) %s' % (type(e).__name__, e)
+            )
             log.warning(message)
             raise
 
