@@ -15,5 +15,9 @@ Optional:
 * ES_USER
 * ES_PASS
 * ES_HOST
+* LOGSTASH_URL (default `http://uc-ls-event-loop.collectors.svc.cluster.local:80`)
+
+rucio-nongrid-traces are not indexed directly; they are POSTed to Logstash
+(with `User-Agent: xAODRootAccess`, which the Logstash pipeline requires).
 
 NB: for ATLAS Analytics this collector runs at UofC River k8s cluster in "collectors" namespace.

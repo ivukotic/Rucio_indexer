@@ -64,13 +64,32 @@ def get_timestamp(index_prefix, m):
         return datetime.now(timezone.utc)
 
 
+LOGSTASH_PREFIXES = {'rucio-nongrid-traces'}  # sent via logstash, not directly to ES
+LOGSTASH_BATCH = 100
+LOGSTASH_FLUSH_INTERVAL = 30  # seconds
+
+
 def eventCreator():
     aLotOfData = []
+    lsData = []
+    last_ls_flush = time.time()
     es_conn = tools.get_es_connection()
     while True:
-        index_prefix, m = q.get()
+        if lsData and (len(lsData) >= LOGSTASH_BATCH or
+                       time.time() - last_ls_flush > LOGSTASH_FLUSH_INTERVAL):
+            tools.send_to_logstash(lsData, thread_name=threading.current_thread().name)
+            lsData = []
+            last_ls_flush = time.time()
+
+        try:
+            index_prefix, m = q.get(timeout=LOGSTASH_FLUSH_INTERVAL)
+        except queue.Empty:
+            continue
         try:
             if not isinstance(m, dict):
+                continue
+            if index_prefix in LOGSTASH_PREFIXES:
+                lsData.append(m)
                 continue
             dati = get_timestamp(index_prefix, m)
             data = copy.copy(m)

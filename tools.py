@@ -2,6 +2,8 @@
 import os
 import sys
 import time
+import json
+import requests
 from elasticsearch import Elasticsearch, exceptions as es_exceptions
 from elasticsearch import helpers
 
@@ -54,6 +56,30 @@ def bulk_index(data, es_conn=None, thread_name=''):
     except:
         print('Something seriously wrong happened.')
     return success
+
+
+LOGSTASH_URL = os.environ.get(
+    'LOGSTASH_URL', 'http://uc-ls-event-loop.collectors.svc.cluster.local:80')
+# logstash pipeline drops everything not sent with this user agent
+LOGSTASH_HEADERS = {'User-Agent': 'xAODRootAccess',
+                    'Content-Type': 'application/json'}
+
+
+def send_to_logstash(data, thread_name=''):
+    """
+    sends a list of documents to logstash http input as one JSON array
+    (the json codec splits it into separate events).
+    if successful returns True.
+    """
+    try:
+        res = requests.post(LOGSTASH_URL, data=json.dumps(data),
+                            headers=LOGSTASH_HEADERS, timeout=60)
+        res.raise_for_status()
+        print(thread_name, "sent to logstash:", len(data))
+        return True
+    except requests.exceptions.RequestException as error:
+        print('logstash error:', error)
+    return False
 
 
 def get_MQ_connection_parameters():
