@@ -101,16 +101,18 @@ class ActiveMqListener(stomp.ConnectionListener):
             self._reconnect_lock.release()
 
     def on_message(self, frame):
-        message = frame.body[:-1]  # Skip EOT
+        # FTS messages were terminated with EOT (\x04); Rucio ones are not.
+        message = frame.body.rstrip('\x04')
         try:
             content = json.loads(message)
             self.callback(content)
         except Exception as e:
+            # Don't re-raise: an exception here kills stomp's receiver
+            # thread and drops the connection.
             log.warning(
                 'Failed to process message: (%s) %s' % (type(e).__name__, e)
             )
             log.warning(message)
-            raise
 
     def on_error(self, frame):
         log.error(f'ActiveMQ error: {frame.body}')
