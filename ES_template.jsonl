@@ -1,0 +1,348 @@
+PUT _index_template/rucio-nongrid-traces
+{
+  "template": {
+    "aliases": {
+      "rucio-nongrid-traces": {}
+    },
+    "mappings": {
+      "properties": {
+        "containers_accessed": {
+          "type": "keyword"
+        },
+        "timeentry": {
+          "format": "epoch_second",
+          "index": true,
+          "ignore_malformed": false,
+          "store": false,
+          "type": "date",
+          "doc_values": true
+        },
+        "ip": {
+          "type": "ip"
+        },
+        "@version": {
+          "type": "keyword"
+        },
+        "files": {
+          "type": "text"
+        },
+        "ReportRate": {
+          "type": "float"
+        },
+        "branches_accessed": {
+          "eager_global_ordinals": false,
+          "norms": false,
+          "index": true,
+          "store": false,
+          "type": "keyword",
+          "index_options": "docs",
+          "split_queries_on_whitespace": false,
+          "doc_values": true
+        },
+        "ROOT_RELEASE": {
+          "type": "keyword"
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "mapping": {
+          "total_fields": {
+            "limit": "10000"
+          }
+        }
+      }
+    }
+  },
+  "index_patterns": [
+    "rucio-nongrid-traces-*"
+  ],
+  "composed_of": [],
+  "ignore_missing_component_templates": []
+}
+
+PUT _template/rucio
+{
+  "order": 0,
+  "index_patterns": [
+    "rucio-events*"
+  ],
+  "settings": {
+    "index": {
+      "lifecycle": {
+        "name": "rucio"
+      },
+      "number_of_shards": "6",
+      "number_of_replicas": "1"
+    }
+  },
+  "aliases": {
+    "rucio_events": {}
+  },
+  "mappings": {
+    "properties": {
+      "@timestamp": {
+        "format": "strict_date_optional_time||epoch_millis",
+        "type": "date"
+      },
+      "payload": {
+        "properties": {
+          "reason": {
+            "type": "text"
+          },
+          "dst-url": {
+            "type": "text"
+          },
+          "src-rse-id": {
+            "type": "text"
+          },
+          "activity": {
+            "type": "keyword"
+          },
+          "submitted_at": {
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSSSSS",
+            "type": "date"
+          },
+          "rse": {
+            "type": "keyword"
+          },
+          "dst-type": {
+            "type": "keyword"
+          },
+          "transfer-endpoint": {
+            "type": "keyword"
+          },
+          "src-type": {
+            "type": "keyword"
+          },
+          "duration": {
+            "type": "float"
+          },
+          "protocol": {
+            "type": "keyword"
+          },
+          "external-host": {
+            "type": "keyword"
+          },
+          "request-type": {
+            "type": "keyword"
+          },
+          "scope": {
+            "type": "keyword"
+          },
+          "dst-rse": {
+            "type": "keyword"
+          },
+          "external-id": {
+            "type": "text"
+          },
+          "state": {
+            "type": "keyword"
+          },
+          "transferred_at": {
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSSSSS",
+            "type": "date"
+          },
+          "src-rse": {
+            "type": "keyword"
+          },
+          "queued_at": {
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSSSSS",
+            "type": "date"
+          },
+          "checksum-md5": {
+            "type": "text"
+          },
+          "previous-request-id": {
+            "type": "text"
+          },
+          "request-id": {
+            "type": "text"
+          },
+          "transfer-link": {
+            "type": "text"
+          },
+          "url": {
+            "type": "text"
+          },
+          "bytes": {
+            "type": "long"
+          },
+          "dst-rse-id": {
+            "type": "text"
+          },
+          "file-size": {
+            "type": "long"
+          },
+          "name": {
+            "type": "text"
+          },
+          "src-url": {
+            "type": "text"
+          },
+          "guid": {
+            "type": "text"
+          },
+          "started_at": {
+            "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSSSSS",
+            "type": "date"
+          },
+          "tool-id": {
+            "type": "keyword"
+          },
+          "checksum-adler": {
+            "type": "text"
+          },
+          "transfer-id": {
+            "type": "text"
+          }
+        }
+      },
+      "@version": {
+        "type": "keyword"
+      },
+      "created_at": {
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSSSSS",
+        "type": "date"
+      },
+      "type": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+PUT _template/rucio-traces
+{
+  "order": 1,
+  "index_patterns": [
+    "rucio-traces*"
+  ],
+  "settings": {
+    "index": {
+      "lifecycle": {
+        "name": "rucio"
+      },
+      "number_of_shards": "6",
+      "number_of_replicas": "1"
+    }
+  },
+  "aliases": {
+    "rucio_traces": {}
+  },
+  "mappings": {
+    "properties": {
+      "pq": {
+        "type": "keyword"
+      },
+      "eventVersion": {
+        "type": "keyword"
+      },
+      "traceTimeentry": {
+        "type": "date"
+      },
+      "filesize": {
+        "type": "long"
+      },
+      "datasetScope": {
+        "type": "keyword"
+      },
+      "stateReason": {
+        "type": "keyword"
+      },
+      "type": {
+        "type": "keyword"
+      },
+      "uuid": {
+        "type": "keyword"
+      },
+      "hostname": {
+        "type": "keyword"
+      },
+      "protocol": {
+        "type": "keyword"
+      },
+      "timeStart": {
+        "type": "double"
+      },
+      "usr": {
+        "type": "keyword"
+      },
+      "scope": {
+        "type": "keyword"
+      },
+      "@version": {
+        "type": "keyword"
+      },
+      "taskid": {
+        "type": "keyword"
+      },
+      "timeEnd": {
+        "type": "double"
+      },
+      "traceId": {
+        "type": "keyword"
+      },
+      "catStart": {
+        "type": "float"
+      },
+      "ip": {
+        "type": "keyword"
+      },
+      "traceTimeentryUnix": {
+        "type": "float"
+      },
+      "relativeStart": {
+        "type": "float"
+      },
+      "eventType": {
+        "type": "keyword"
+      },
+      "traceIp": {
+        "type": "keyword"
+      },
+      "url": {
+        "type": "keyword"
+      },
+      "@timestamp": {
+        "type": "date"
+      },
+      "filename": {
+        "type": "keyword"
+      },
+      "transferEnd": {
+        "type": "float"
+      },
+      "appid": {
+        "type": "keyword"
+      },
+      "usrdn": {
+        "type": "keyword"
+      },
+      "guid": {
+        "type": "keyword"
+      },
+      "clientState": {
+        "type": "keyword"
+      },
+      "localSite": {
+        "type": "keyword"
+      },
+      "transferStart": {
+        "type": "float"
+      },
+      "validateStart": {
+        "type": "float"
+      },
+      "dataset": {
+        "type": "keyword"
+      },
+      "remoteSite": {
+        "type": "keyword"
+      },
+      "account": {
+        "type": "keyword"
+      }
+    }
+  }
+}

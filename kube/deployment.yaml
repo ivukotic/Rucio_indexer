@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fts-indexer
+  name: rucio-indexer
   namespace: collectors
   labels:
-    app: fts-indexer
+    app: rucio-indexer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: fts-indexer
+      app: rucio-indexer
   template:
     metadata:
       labels:
-        app: fts-indexer
+        app: rucio-indexer
     spec:
       containers:
-        - name: fts-indexer
-          image: ivukotic/fts_indexer:latest
+        - name: rucio-indexer
+          image: ivukotic/rucio_indexer:latest
           command: ["python"]
-          args: ["FTS_indexer.py"]
+          args: ["RUCIO_indexer.py"]
           env:
             - name: MQ_USER
               valueFrom:

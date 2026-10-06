@@ -1,12 +1,12 @@
-# FTS_indexer
+# RUCIO_indexer
 
-Collects data from FTS AMQ and sends to Elasticsearch
+Collects data from Rucio AMQ and sends to Elasticsearch
 
 requires environment variables:
 
 Mandatory:
 
-* MQ_HOST = 'netmon-mb.cern.ch'
+* MQ_HOST = 'atlas-mb.cern.ch'
 * MQ_USER = 'XXXXX'
 * MQ_PASS = 'XXXXX'
 
