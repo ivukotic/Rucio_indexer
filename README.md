@@ -21,3 +21,5 @@ rucio-nongrid-traces are not indexed directly; they are POSTed to Logstash
 (with `User-Agent: xAODRootAccess`, which the Logstash pipeline requires).
 
 NB: for ATLAS Analytics this collector runs at UofC River k8s cluster in "collectors" namespace.
+
+At some point this should be changed so also rucio-events and rucio-traces go to a logstash collector and not straight to Elasticsearch. Disconnected ES never reconnects by itself.
