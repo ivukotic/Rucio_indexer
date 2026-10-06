@@ -1,4 +1,4 @@
-name: Build FTS indexer dockerhub image
+name: Build RUCIO indexer dockerhub image
 
 on:
   push:
