@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 
 import tools
 from AMQ_Listener import ActiveMqListener
-# import siteMapping
 
 # virtual queue -> index prefix
 queues = {
@@ -19,7 +18,6 @@ queues = {
     "/queue/Consumer.ftsucanalytics.rucio.events": "rucio-events",
 }
 
-# siteMapping.reload()
 MQ_parameters = tools.get_MQ_connection_parameters()
 
 q = queue.Queue(maxsize=5000)

@@ -25,12 +25,13 @@ class ActiveMqListener(stomp.ConnectionListener):
         self._reconnect_lock = threading.Lock()
         # heartbeats=(send_ms, recv_ms) — broker must reply within recv_ms
         # or the stomp library fires on_heartbeat_timeout automatically.
-        # reconnect_attempts_max=0 disables stomp.py's own built-in
-        # auto-reconnect thread; otherwise it races with _reconnect() below
-        # and both send a CONNECT frame on the same socket, which the broker
-        # rejects as a duplicate CONNECT and kills the connection.
+        # reconnect_attempts_max is the number of socket-open attempts made
+        # inside a single connect() call (NOT a background reconnect thread).
+        # 0 means the socket is never opened and connect() always raises an
+        # empty ConnectFailedException. Use 1 and let _reconnect() below own
+        # retries/backoff.
         self.connection = stomp.Connection(
-            [(host, port)], heartbeats=(4000, 4000), reconnect_attempts_max=0
+            [(host, port)], heartbeats=(4000, 4000), reconnect_attempts_max=1
         )
         self.connection.set_listener('MessagingListener', self)
         self.topic = topic
@@ -87,7 +88,8 @@ class ActiveMqListener(stomp.ConnectionListener):
                     return
                 except Exception as e:
                     log.warning(
-                        f'Reconnect attempt {attempt} failed: {e}. '
+                        f'Reconnect attempt {attempt} failed: '
+                        f'({type(e).__name__}) {e}. '
                         f'Retry in {delay}s...'
                     )
                     time.sleep(delay)
