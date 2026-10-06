@@ -59,7 +59,7 @@ def bulk_index(data, es_conn=None, thread_name=''):
 
 
 LOGSTASH_URL = os.environ.get(
-    'LOGSTASH_URL', 'http://uc-ls-event-loop.collectors.svc.cluster.local:80')
+    'LOGSTASH_URL', 'http://uc-ls-event-loop.collectors.svc:80')
 # logstash pipeline drops everything not sent with this user agent
 LOGSTASH_HEADERS = {'User-Agent': 'xAODRootAccess',
                     'Content-Type': 'application/json'}

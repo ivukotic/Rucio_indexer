@@ -21,6 +21,8 @@ spec:
           command: ["python"]
           args: ["RUCIO_indexer.py"]
           env:
+            - name: LOGSTASH_URL
+              value: "http://uc-ls-event-loop:80"
             - name: MQ_USER
               valueFrom:
                 secretKeyRef:
