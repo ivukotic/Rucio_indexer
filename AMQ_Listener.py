@@ -36,9 +36,12 @@ class ActiveMqListener(stomp.ConnectionListener):
         self.connection.set_listener('MessagingListener', self)
         self.topic = topic
         self.callback = callback
-        # Handles initial connect with backoff so startup failures don't
-        # crash the process.
-        self._reconnect()
+        # Initial connect (with backoff) runs in a background thread so one
+        # unreachable broker doesn't block creation of listeners for the
+        # other brokers behind the same DNS alias.
+        threading.Thread(
+            target=self._reconnect, name=f'amq-connect-{host}', daemon=True
+        ).start()
 
     def on_connecting(self, host_and_port):
         log.debug(f'ActiveMQ connected socket to {str(host_and_port)}')

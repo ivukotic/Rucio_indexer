@@ -34,7 +34,7 @@ def make_inserter(index_prefix):
 
 
 print("starting ...")
-PORT = 61113
+PORT = 61013  # plain STOMP on atlas-mb brokers (61023 is STOMP+TLS)
 
 ips = set()
 for a in socket.getaddrinfo(MQ_parameters['MQ_HOST'], PORT):
