@@ -23,15 +23,23 @@ class ActiveMqListener(stomp.ConnectionListener):
         self.user = user
         self.password = password
         self._reconnect_lock = threading.Lock()
-        # heartbeats=(send_ms, recv_ms) — broker must reply within recv_ms
-        # or the stomp library fires on_heartbeat_timeout automatically.
+        # heartbeats=(send_ms, recv_ms). stomp.py declares a heartbeat timeout
+        # (and drops the socket) if nothing arrives from the broker for
+        # recv_ms * heart_beat_receive_scale. With the old (4000, 4000) and
+        # default scale 1.5 that was only 6 s, and ActiveMQ's inactivity
+        # monitor only checks every recv_ms, so its gaps can approach
+        # 2 * recv_ms — that produced spurious "heartbeat timeout:
+        # diff_receive=6.000..." disconnects. 10 s * 3 = 30 s tolerance.
         # reconnect_attempts_max is the number of socket-open attempts made
         # inside a single connect() call (NOT a background reconnect thread).
         # 0 means the socket is never opened and connect() always raises an
         # empty ConnectFailedException. Use 1 and let _reconnect() below own
         # retries/backoff.
         self.connection = stomp.Connection(
-            [(host, port)], heartbeats=(4000, 4000), reconnect_attempts_max=1
+            [(host, port)],
+            heartbeats=(10000, 10000),
+            heart_beat_receive_scale=3,
+            reconnect_attempts_max=1,
         )
         self.connection.set_listener('MessagingListener', self)
         self.topic = topic
