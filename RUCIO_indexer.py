@@ -16,7 +16,11 @@ queues = {
     "/queue/Consumer.ftsucanalytics.rucio.nongrid_tracer": "rucio-nongrid-traces",
     "/queue/Consumer.ftsucanalytics.rucio.tracer": "rucio-traces",
     "/queue/Consumer.ftsucanalytics.rucio.events": "rucio-events",
+    "/queue/Consumer.ftsucanalytics.rucio.inject": "rucio-injector",
 }
+
+# low-volume sources get monthly instead of daily indices
+MONTHLY_PREFIXES = {'rucio-injector'}
 
 MQ_parameters = tools.get_MQ_connection_parameters()
 
@@ -58,6 +62,8 @@ def get_timestamp(index_prefix, m):
             return datetime.fromisoformat(m['created_at']).replace(tzinfo=timezone.utc)
         if index_prefix == 'rucio-nongrid-traces':
             return datetime.fromtimestamp(float(m['timeentry']), timezone.utc)
+        if index_prefix == 'rucio-injector':
+            return datetime.fromtimestamp(m['timestamp_ms'] / 1000, timezone.utc)
         # tracer messages carry unix seconds
         return datetime.fromtimestamp(float(m['traceTimeentryUnix']), timezone.utc)
     except Exception:
@@ -67,14 +73,24 @@ def get_timestamp(index_prefix, m):
 LOGSTASH_PREFIXES = {'rucio-nongrid-traces'}  # sent via logstash, not directly to ES
 LOGSTASH_BATCH = 100
 LOGSTASH_FLUSH_INTERVAL = 30  # seconds
+ES_BATCH = 500
+ES_FLUSH_INTERVAL = 30  # seconds; low-volume sources must not wait for a full batch
 
 
 def eventCreator():
     aLotOfData = []
     lsData = []
     last_ls_flush = time.time()
+    last_es_flush = time.time()
     es_conn = tools.get_es_connection()
     while True:
+        if aLotOfData and (len(aLotOfData) >= ES_BATCH or
+                           time.time() - last_es_flush > ES_FLUSH_INTERVAL):
+            tools.bulk_index(aLotOfData, es_conn=es_conn,
+                             thread_name=threading.current_thread().name)
+            aLotOfData = []
+            last_es_flush = time.time()
+
         if lsData and (len(lsData) >= LOGSTASH_BATCH or
                        time.time() - last_ls_flush > LOGSTASH_FLUSH_INTERVAL):
             tools.send_to_logstash(lsData, thread_name=threading.current_thread().name)
@@ -93,18 +109,16 @@ def eventCreator():
                 continue
             dati = get_timestamp(index_prefix, m)
             data = copy.copy(m)
-            data['_index'] = f'{index_prefix}-{dati.year}.{str(dati.month).zfill(2)}.{str(dati.day).zfill(2)}'
+            if index_prefix in MONTHLY_PREFIXES:
+                data['_index'] = f'{index_prefix}-{dati.year}.{dati.month:02d}'
+            else:
+                data['_index'] = f'{index_prefix}-{dati.year}.{dati.month:02d}.{dati.day:02d}'
             data['@timestamp'] = int(dati.timestamp() * 1000)
             aLotOfData.append(data)
         except Exception as e:
             print('failed to process message:', type(e).__name__, e, m)
         finally:
             q.task_done()
-
-        if len(aLotOfData) > 500:
-            tools.bulk_index(aLotOfData, es_conn=es_conn,
-                             thread_name=threading.current_thread().name)
-            aLotOfData = []
 
 
 # start eventCreator threads

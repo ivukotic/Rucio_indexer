@@ -346,3 +346,72 @@ PUT _template/rucio-traces
     }
   }
 }
+
+PUT _index_template/rucio-injector
+{
+  "index_patterns": [
+    "rucio-injector-*"
+  ],
+  "template": {
+    "aliases": {
+      "rucio-injector": {}
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": 1
+      }
+    },
+    "mappings": {
+      "dynamic_templates": [
+        {
+          "strings_as_keywords": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp": { "type": "date", "format": "strict_date_optional_time||epoch_millis" },
+        "time": { "type": "date" },
+        "timestamp_ms": { "type": "date", "format": "epoch_millis" },
+        "cycle_due": { "type": "date" },
+        "cycle_due_ms": { "type": "date", "format": "epoch_millis" },
+        "expires_at": { "type": "date" },
+        "expires_at_ms": { "type": "date", "format": "epoch_millis" },
+        "counted_until": { "type": "date" },
+        "counted_until_ms": { "type": "date", "format": "epoch_millis" },
+        "event": { "type": "keyword" },
+        "severity": { "type": "keyword" },
+        "run_id": { "type": "keyword" },
+        "plan": { "type": "keyword" },
+        "src": { "type": "keyword" },
+        "dst": { "type": "keyword" },
+        "did": { "type": "keyword" },
+        "rule_id": { "type": "keyword" },
+        "error_type": { "type": "keyword" },
+        "error": { "type": "text" },
+        "stop_reason": { "type": "keyword" },
+        "dryrun": { "type": "boolean" },
+        "file_cap_hit": { "type": "boolean" },
+        "target_mbps": { "type": "double" },
+        "injected_mbps": { "type": "double" },
+        "share": { "type": "double" },
+        "target_fraction": { "type": "double" },
+        "expected_fraction": { "type": "double" },
+        "duration_s": { "type": "double" },
+        "lag_s": { "type": "double" },
+        "bytes": { "type": "long" },
+        "avg_file_bytes": { "type": "long" },
+        "interval_bytes": { "type": "long" },
+        "credit_before": { "type": "long" },
+        "credit_after": { "type": "long" },
+        "target_bytes": { "type": "long" },
+        "injected_bytes": { "type": "long" },
+        "bytes_alive": { "type": "long" }
+      }
+    }
+  },
+  "priority": 100
+}
