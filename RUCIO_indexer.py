@@ -19,8 +19,8 @@ queues = {
     "/queue/Consumer.ftsucanalytics.rucio.inject": "rucio-injector",
 }
 
-# low-volume sources get monthly instead of daily indices
-MONTHLY_PREFIXES = {'rucio-injector'}
+# low-volume sources go to one index (no date suffix) instead of daily indices
+SINGLE_INDEX_PREFIXES = {'rucio-injector'}
 
 MQ_parameters = tools.get_MQ_connection_parameters()
 
@@ -109,8 +109,8 @@ def eventCreator():
                 continue
             dati = get_timestamp(index_prefix, m)
             data = copy.copy(m)
-            if index_prefix in MONTHLY_PREFIXES:
-                data['_index'] = f'{index_prefix}-{dati.year}.{dati.month:02d}'
+            if index_prefix in SINGLE_INDEX_PREFIXES:
+                data['_index'] = index_prefix
             else:
                 data['_index'] = f'{index_prefix}-{dati.year}.{dati.month:02d}.{dati.day:02d}'
             data['@timestamp'] = int(dati.timestamp() * 1000)

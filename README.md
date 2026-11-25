@@ -24,7 +24,7 @@ Optional:
 | `/queue/Consumer.ftsucanalytics.rucio.tracer` | ES `rucio-traces-YYYY.MM.DD` |
 | `/queue/Consumer.ftsucanalytics.rucio.events` | ES `rucio-events-YYYY.MM.DD` |
 | `/queue/Consumer.ftsucanalytics.rucio.nongrid_tracer` | Logstash (`rucio-nongrid-traces`) |
-| `/queue/Consumer.ftsucanalytics.rucio.inject` | ES `rucio-injector-YYYY.MM` |
+| `/queue/Consumer.ftsucanalytics.rucio.inject` | ES `rucio-injector` (single index) |
 
 ### rucio-injector
 
@@ -45,8 +45,8 @@ Every document carries `time`, `timestamp_ms`, `run_id`, `host`, `account`,
 `dryrun`, `severity`, and (except heartbeat) `plan`, `src`, `dst`.
 `@timestamp` is taken from `timestamp_ms`.
 
-The source is low volume and can be silent for days, so it goes to monthly
-indices (aliased as `rucio-injector`) instead of daily ones. Documents are
+The source is low volume (well under 1M documents in total) and can be silent
+for days, so it goes to a single `rucio-injector` index instead of daily ones. Documents are
 flushed to ES at least every 30 s regardless of batch size, so they show up
 promptly. The no-message reconnect watchdog looks at all queues together, so
 silence on this queue alone does not trigger reconnects. The index template

@@ -350,12 +350,9 @@ PUT _template/rucio-traces
 PUT _index_template/rucio-injector
 {
   "index_patterns": [
-    "rucio-injector-*"
+    "rucio-injector"
   ],
   "template": {
-    "aliases": {
-      "rucio-injector": {}
-    },
     "settings": {
       "index": {
         "number_of_shards": 1
